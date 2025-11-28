@@ -1,234 +1,155 @@
-# ReliefLink
+# AppClient - Hệ thống Bầu cử Điện tử (Client)
 
-A comprehensive relief and aid management platform built with Next.js, TypeScript, and Tailwind CSS.
+Ứng dụng client React + TypeScript cho hệ thống bầu cử điện tử, kết nối với Laravel API backend.
 
-## 🚀 Features
+## 🚀 Công nghệ sử dụng
 
-ReliefLink provides two distinct user interfaces:
+- **React 18** - UI Framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool nhanh
+- **React Router** - Routing
+- **Axios** - HTTP client
+- **Tailwind CSS** - Styling (responsive)
+- **Lucide React** - Icons
 
-### Master Admin Dashboard
-- **Full System Control**: Complete overview and management of the entire platform
-- **User Management**: Manage all users and their permissions
-- **Analytics & Reports**: Comprehensive statistics and demographic insights
-- **Resource Allocation**: Track and manage relief resources
-- **Calendar Management**: Schedule and coordinate relief activities
-- **Advanced Charts**: Line charts, bar charts, and data visualization
-- **UI Components**: Full suite of alerts, avatars, badges, buttons, images, and videos
+## 📋 Yêu cầu
 
-### User Portal
-- **Personal Dashboard**: View individual relief requests and donations
-- **Request Management**: Submit and track relief requests
-- **Donation Tracking**: Monitor contributions and impact
-- **Profile Management**: Update personal information and preferences
-- **Activity Feed**: View recent activities and updates
-- **Impact Score**: Track community ranking and contributions
-- **Resources**: Access relief resources and information
+- Node.js >= 18.0.0
+- npm hoặc yarn
 
-## 🛠️ Tech Stack
+## 🛠️ Cài đặt
 
-- **Framework**: Next.js 15.2.3
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4.0
-- **UI Components**: Custom components with shadcn/ui patterns
-- **Charts**: ApexCharts & React-ApexCharts
-- **Calendar**: FullCalendar
-- **Maps**: React JVectorMap
-- **Forms**: React Dropzone, Flatpickr
-- **Drag & Drop**: React DnD
-- **Carousel**: Swiper
-
-## 📦 Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd RELIEFLINK
-```
-
-2. Install dependencies:
+1. Cài đặt dependencies:
 ```bash
 npm install
-# or
+# hoặc
 yarn install
 ```
 
-3. Run the development server:
+2. Tạo file `.env` từ `.env.example`:
+```bash
+cp .env.example .env
+```
+
+3. Cấu hình API URL trong file `.env`:
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+## 🏃 Chạy ứng dụng
+
+### Development mode
 ```bash
 npm run dev
-# or
+# hoặc
 yarn dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Ứng dụng sẽ chạy tại `http://localhost:3000`
 
-## 🌐 Routes
-
-### Master Admin Routes
-- `/master-admin` - Master Admin Dashboard
-- `/master-admin/calendar` - Calendar Management
-- `/master-admin/users` - User Management
-- `/master-admin/form-elements` - Form Elements
-- `/master-admin/basic-tables` - Tables
-- `/master-admin/line-chart` - Line Charts
-- `/master-admin/bar-chart` - Bar Charts
-- `/master-admin/alerts` - Alert Components
-- `/master-admin/avatars` - Avatar Components
-- `/master-admin/badge` - Badge Components
-- `/master-admin/buttons` - Button Components
-- `/master-admin/images` - Image Gallery
-- `/master-admin/videos` - Video Components
-
-### User Routes
-- `/user` - User Dashboard
-- `/user/requests` - Relief Requests
-- `/user/profile` - User Profile
-- `/user/resources` - Resource Center
-
-## 🎨 Theme Support
-
-ReliefLink supports both light and dark themes:
-- Toggle theme using the theme switcher in the header
-- Theme preference is saved automatically
-- Dark mode optimized for better readability
-
-## 📱 Responsive Design
-
-The platform is fully responsive and works seamlessly on:
-- Desktop (1920px and above)
-- Laptop (1024px - 1919px)
-- Tablet (768px - 1023px)
-- Mobile (320px - 767px)
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env.local` file in the root directory:
-
-```env
-NEXT_PUBLIC_API_URL=your_api_url
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+### Build cho production
+```bash
+npm run build
+# hoặc
+yarn build
 ```
 
-### Tailwind Configuration
+### Preview production build
+```bash
+npm run preview
+# hoặc
+yarn preview
+```
 
-The project uses Tailwind CSS v4 with custom theme configuration in `src/app/globals.css`.
-
-## 📂 Project Structure
+## 📁 Cấu trúc thư mục
 
 ```
-RELIEFLINK/
-├── public/
-│   └── images/          # Static images and assets
+AppClient/
 ├── src/
-│   ├── app/
-│   │   ├── master-admin/   # Master admin routes
-│   │   ├── user/           # User routes
-│   │   ├── layout.tsx      # Root layout
-│   │   ├── page.tsx        # Home page (redirects)
-│   │   ├── not-found.tsx   # 404 page
-│   │   └── globals.css     # Global styles
-│   ├── components/
-│   │   ├── auth/           # Authentication components
-│   │   ├── calendar/       # Calendar components
-│   │   ├── charts/         # Chart components
-│   │   ├── common/         # Common/shared components
-│   │   ├── ecommerce/      # Dashboard components
-│   │   ├── form/           # Form components
-│   │   ├── header/         # Header components
-│   │   ├── tables/         # Table components
-│   │   ├── ui/             # UI components
-│   │   └── videos/         # Video components
-│   ├── context/
-│   │   ├── SidebarContext.tsx  # Sidebar state management
-│   │   └── ThemeContext.tsx    # Theme state management
-│   ├── hooks/              # Custom React hooks
-│   ├── icons/              # SVG icons
-│   └── layout/
-│       ├── AppHeader.tsx   # Application header
-│       ├── AppSidebar.tsx  # Application sidebar
-│       ├── Backdrop.tsx    # Mobile overlay
-│       └── SidebarWidget.tsx  # Sidebar widget
+│   ├── components/      # React components tái sử dụng
+│   │   ├── Layout.tsx
+│   │   ├── Card.tsx
+│   │   ├── Button.tsx
+│   │   ├── LoadingSpinner.tsx
+│   │   └── StatusBadge.tsx
+│   ├── lib/             # Utilities
+│   │   └── api.ts       # Axios client configuration
+│   ├── pages/           # Page components
+│   │   ├── HomePage.tsx
+│   │   ├── CuocBoPhieuPage.tsx
+│   │   ├── CuocBoPhieuDetailPage.tsx
+│   │   └── NotFoundPage.tsx
+│   ├── services/        # API services
+│   │   ├── cuocBoPhieuService.ts
+│   │   └── phieuBauService.ts
+│   ├── types/           # TypeScript types
+│   │   └── index.ts
+│   ├── App.tsx          # Main app component
+│   ├── main.tsx         # Entry point
+│   └── index.css        # Global styles
+├── public/              # Static files
+├── index.html
 ├── package.json
 ├── tsconfig.json
-├── next.config.ts
-└── README.md
+├── vite.config.ts
+├── tailwind.config.js
+└── .env                 # Environment variables
 ```
 
-## 🚦 Available Scripts
+## 🔌 Kết nối với Backend
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+Ứng dụng kết nối với Laravel API backend thông qua:
 
-## 🎯 Key Features Implementation
+- **Base URL**: Được cấu hình trong `.env` file (`VITE_API_BASE_URL`)
+- **API Client**: `src/lib/api.ts` - Axios instance với interceptors
+- **Services**: `src/services/` - Các service functions để gọi API
 
-### Role-Based Access Control
-The platform implements role-based routing:
-- Master Admin users access `/master-admin/*` routes
-- Regular users access `/user/*` routes
-- Each role has customized sidebar navigation and dashboard
+### Các API endpoints được sử dụng:
 
-### Responsive Sidebar
-- Expandable/collapsible sidebar
-- Hover expand feature on desktop
-- Mobile-friendly drawer
-- Dynamic width adjustments
-- Persistent state management
+- `GET /api/cuoc-bo-phieus` - Lấy danh sách cuộc bỏ phiếu
+- `GET /api/cuoc-bo-phieus/:id` - Lấy chi tiết cuộc bỏ phiếu
+- `GET /api/phieu-baus` - Lấy danh sách phiếu bầu
+- `POST /api/phieu-baus` - Tạo phiếu bầu mới
 
-### Dark Mode
-- System-wide dark mode support
-- Smooth transitions between themes
-- Optimized colors for both modes
-- Icon adaptations for theme
+## 🎨 Tính năng
+
+- ✅ Responsive design (mobile, tablet, desktop)
+- ✅ Dark mode ready (có thể mở rộng)
+- ✅ Type-safe với TypeScript
+- ✅ Error handling
+- ✅ Loading states
+- ✅ Pagination
+- ✅ Status badges
+- ✅ Modern UI với Tailwind CSS
+
+## 📱 Responsive Breakpoints
+
+- Mobile: < 640px
+- Tablet: 640px - 1024px
+- Desktop: > 1024px
 
 ## 🔐 Authentication
 
-The platform includes authentication pages:
-- Sign In: `/signin`
-- Sign Up: `/signup`
+Hiện tại ứng dụng chưa có authentication. Có thể mở rộng bằng cách:
 
-## 📊 Dashboard Components
+1. Thêm authentication service
+2. Sử dụng localStorage/sessionStorage để lưu token
+3. Thêm protected routes
+4. Thêm login/register pages
 
-### Master Admin Dashboard
-- Ecommerce metrics cards
-- Monthly sales charts
-- Statistics visualization
-- Recent orders table
-- Demographic distribution map
+## 📝 Lưu ý
 
-### User Dashboard
-- Relief request counter
-- Donation tracking
-- Impact score display
-- Recent activity timeline
+- Đảm bảo Laravel backend đã chạy và CORS đã được cấu hình đúng
+- Kiểm tra API URL trong file `.env` trước khi chạy
+- Nếu gặp lỗi CORS, cần cấu hình trong Laravel backend
 
-## 🤝 Contributing
+## 🚧 Mở rộng trong tương lai
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 👥 Support
-
-For support and questions:
-- Create an issue in the repository
-- Contact the development team
-
-## 🙏 Acknowledgments
-
-- Built on top of a Next.js admin dashboard template
-- Icons and assets from various open-source projects
-- Tailwind CSS for styling framework
-
----
-
-**ReliefLink** - Connecting communities with relief resources efficiently and transparently.
+- [ ] Authentication & Authorization
+- [ ] Form bầu cử với ZK-proof integration
+- [ ] Real-time updates với WebSocket
+- [ ] Dark mode toggle
+- [ ] Internationalization (i18n)
+- [ ] Unit tests & E2E tests
+- [ ] PWA support
 
