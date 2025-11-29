@@ -1,6 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Vote, Building2, Users, Menu, X, BarChart3 } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Vote, Building2, Users, Menu, X, BarChart3, LogOut, User } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,13 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   const navigation = [
     { name: 'Trang chủ', to: '/', icon: Home },
@@ -40,7 +48,7 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:block">
-              <ul className="flex gap-1">
+              <ul className="flex gap-1 items-center">
                 {navigation.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.to);
@@ -49,8 +57,8 @@ export default function Layout({ children }: LayoutProps) {
                       <Link
                         to={item.to}
                         className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${active
-                            ? 'bg-blue-100 text-blue-700 shadow-sm'
-                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                          ? 'bg-blue-100 text-blue-700 shadow-sm'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                           }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -59,6 +67,34 @@ export default function Layout({ children }: LayoutProps) {
                     </li>
                   );
                 })}
+
+                <li className="ml-4 pl-4 border-l border-gray-200">
+                  {user ? (
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                          <User className="h-4 w-4" />
+                        </div>
+                        <span className="hidden lg:inline">{user.name}</span>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="hidden lg:inline">Đăng xuất</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-all"
+                    >
+                      <User className="h-4 w-4" />
+                      Đăng nhập
+                    </Link>
+                  )}
+                </li>
               </ul>
             </nav>
 
@@ -86,8 +122,8 @@ export default function Layout({ children }: LayoutProps) {
                         to={item.to}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${active
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-gray-600 hover:bg-gray-100'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-100'
                           }`}
                       >
                         <Icon className="h-5 w-5" />

@@ -1,5 +1,4 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getCuocBoPhieuById, getKetQuaByCuocBoPhieuId } from '../data/mockData';
 import StatusBadge from '../components/StatusBadge';
 import ResultChart from '../components/ResultChart';
 import VotingForm from '../components/VotingForm';
@@ -13,22 +12,64 @@ import {
   ExternalLink,
   Clock,
   CheckCircle2,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { cuocBoPhieuService } from '@/services/cuocBoPhieuService';
+import { phieuBauService } from '@/services/phieuBauService';
+import { CuocBoPhieu, KetQuaTongHop } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CuocBoPhieuDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [cuocBoPhieu, setCuocBoPhieu] = useState<CuocBoPhieu | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const cuocBoPhieu = id ? getCuocBoPhieuById(parseInt(id)) : undefined;
+  useEffect(() => {
+    if (id) {
+      fetchCuocBoPhieu(parseInt(id));
+    }
+  }, [id]);
 
-  if (!cuocBoPhieu) {
+  const fetchCuocBoPhieu = async (pollId: number) => {
+    try {
+      setIsLoading(true);
+      const data = await cuocBoPhieuService.getById(pollId);
+      setCuocBoPhieu(data);
+      // Check if user has voted logic would go here if API supported it
+      // For now we rely on local state or simple check if needed
+    } catch (err) {
+      console.error('Failed to fetch poll details:', err);
+      setError('Không thể tải thông tin cuộc bỏ phiếu.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error || !cuocBoPhieu) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <h1 className="mb-4 text-4xl font-bold text-gray-900">404</h1>
-        <p className="mb-6 text-gray-600">Không tìm thấy cuộc bỏ phiếu</p>
+        <div className="rounded-full bg-red-100 p-3">
+          <AlertCircle className="h-8 w-8 text-red-600" />
+        </div>
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">Không tìm thấy</h1>
+        <p className="mb-6 text-gray-600">{error || 'Cuộc bỏ phiếu không tồn tại'}</p>
         <Link
           to="/cuoc-bo-phieu"
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
@@ -40,22 +81,48 @@ export default function CuocBoPhieuDetailPage() {
     );
   }
 
-  const results = getKetQuaByCuocBoPhieuId(cuocBoPhieu.id);
+  // Mock results for now as API might not return them in detail view yet
+  // In real implementation, this should come from API
+  const results: KetQuaTongHop[] = cuocBoPhieu.ket_qua_tong_hops || [];
   const totalVotes = results.reduce((sum, r) => sum + r.tong_phieu, 0);
   const totalVoters = cuocBoPhieu.cu_tri_dang_kys?.length || 0;
   const participationRate = totalVoters > 0 ? ((totalVotes / totalVoters) * 100).toFixed(1) : '0';
 
-  const canVote = cuocBoPhieu.trang_thai === 'dang_dien_ra' && !hasVoted;
+  const canVote = cuocBoPhieu.trang_thai === 'dang_dien_ra' && !hasVoted && user;
   const showResults =
     cuocBoPhieu.trang_thai === 'hoan_thanh' ||
     cuocBoPhieu.trang_thai === 'dong' ||
     cuocBoPhieu.trang_thai === 'dang_dien_ra';
 
-  const handleVoteSubmit = (selections: number[]) => {
-    console.log('Vote submitted:', selections);
-    setHasVoted(true);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 5000);
+  const handleVoteSubmit = async (selections: number[]) => {
+    if (!user) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      // Handle multiple selections if needed, for now assuming single choice for API simplicity
+      // or loop through selections
+      for (const selectionId of selections) {
+        await phieuBauService.submitVote({
+          cuoc_bo_phieu_id: cuocBoPhieu.id,
+          lua_chon_id: selectionId,
+        });
+      }
+
+      setHasVoted(true);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+
+      // Refresh data to show updated results if real-time
+      fetchCuocBoPhieu(cuocBoPhieu.id);
+    } catch (err) {
+      console.error('Vote failed:', err);
+      alert('Gửi phiếu bầu thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const InfoItem = ({ icon: Icon, label, value }: { icon: any; label: string; value: string | React.ReactNode }) => (
@@ -183,7 +250,26 @@ export default function CuocBoPhieuDetailPage() {
             luaChons={cuocBoPhieu.lua_chons}
             cheMode={cuocBoPhieu.che_do}
             onSubmit={handleVoteSubmit}
+            isSubmitting={isSubmitting}
           />
+        </div>
+      )}
+
+      {/* Login Prompt for Guests */}
+      {!user && cuocBoPhieu.trang_thai === 'dang_dien_ra' && (
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center">
+          <Users className="mx-auto mb-3 h-12 w-12 text-blue-600" />
+          <h3 className="mb-2 text-lg font-semibold text-blue-900">Đăng nhập để bỏ phiếu</h3>
+          <p className="mb-4 text-sm text-blue-700">
+            Bạn cần đăng nhập để tham gia cuộc bỏ phiếu này.
+          </p>
+          <Link
+            to="/login"
+            state={{ from: location }}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700"
+          >
+            Đăng nhập ngay
+          </Link>
         </div>
       )}
 

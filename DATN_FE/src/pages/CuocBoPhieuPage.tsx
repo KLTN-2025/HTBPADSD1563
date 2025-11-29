@@ -1,44 +1,67 @@
-import { useState, useMemo } from 'react';
-import { mockCuocBoPhieus } from '../data/mockData';
+import { useState, useMemo, useEffect } from 'react';
 import VotingCard from '../components/VotingCard';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { cuocBoPhieuService } from '@/services/cuocBoPhieuService';
+import { CuocBoPhieu } from '@/types';
 
 export default function CuocBoPhieuPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedOrg, setSelectedOrg] = useState<string>('all');
+  const [cuocBoPhieus, setCuocBoPhieus] = useState<CuocBoPhieu[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCuocBoPhieus();
+  }, []);
+
+  const fetchCuocBoPhieus = async () => {
+    try {
+      setIsLoading(true);
+      // In a real app, we might want to fetch all pages or implement server-side filtering
+      // For now, we'll fetch a large number to simulate getting all for client-side filtering
+      const response = await cuocBoPhieuService.getAllForStats();
+      setCuocBoPhieus(response);
+    } catch (err) {
+      console.error('Failed to fetch polls:', err);
+      setError('Không thể tải danh sách cuộc bỏ phiếu. Vui lòng thử lại sau.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const statuses = [
-    { value: 'all', label: 'Tất cả', count: mockCuocBoPhieus.length },
+    { value: 'all', label: 'Tất cả', count: cuocBoPhieus.length },
     {
       value: 'dang_dien_ra',
       label: 'Đang diễn ra',
-      count: mockCuocBoPhieus.filter((c) => c.trang_thai === 'dang_dien_ra').length,
+      count: cuocBoPhieus.filter((c) => c.trang_thai === 'dang_dien_ra').length,
     },
     {
       value: 'len_ke_hoach',
       label: 'Sắp diễn ra',
-      count: mockCuocBoPhieus.filter((c) => c.trang_thai === 'len_ke_hoach').length,
+      count: cuocBoPhieus.filter((c) => c.trang_thai === 'len_ke_hoach').length,
     },
     {
       value: 'hoan_thanh',
       label: 'Hoàn thành',
-      count: mockCuocBoPhieus.filter((c) => c.trang_thai === 'hoan_thanh').length,
+      count: cuocBoPhieus.filter((c) => c.trang_thai === 'hoan_thanh').length,
     },
     {
       value: 'dong',
       label: 'Đã đóng',
-      count: mockCuocBoPhieus.filter((c) => c.trang_thai === 'dong').length,
+      count: cuocBoPhieus.filter((c) => c.trang_thai === 'dong').length,
     },
   ];
 
   const organizations = useMemo(() => {
-    const orgs = new Set(mockCuocBoPhieus.map((c) => c.to_chuc?.ten_to_chuc).filter(Boolean));
+    const orgs = new Set(cuocBoPhieus.map((c) => c.to_chuc?.ten_to_chuc).filter(Boolean));
     return [{ value: 'all', label: 'Tất cả tổ chức' }, ...Array.from(orgs).map((org) => ({ value: org!, label: org! }))];
-  }, []);
+  }, [cuocBoPhieus]);
 
   const filteredCuocBoPhieus = useMemo(() => {
-    return mockCuocBoPhieus.filter((cuocBoPhieu) => {
+    return cuocBoPhieus.filter((cuocBoPhieu) => {
       const matchesSearch =
         cuocBoPhieu.tieu_de.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cuocBoPhieu.mo_ta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -51,7 +74,33 @@ export default function CuocBoPhieuPage() {
 
       return matchesSearch && matchesStatus && matchesOrg;
     });
-  }, [searchTerm, selectedStatus, selectedOrg]);
+  }, [searchTerm, selectedStatus, selectedOrg, cuocBoPhieus]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+        <div className="rounded-full bg-red-100 p-3">
+          <Filter className="h-6 w-6 text-red-600" />
+        </div>
+        <h3 className="mt-4 text-lg font-semibold text-gray-900">Đã có lỗi xảy ra</h3>
+        <p className="mt-2 text-gray-600">{error}</p>
+        <button
+          onClick={fetchCuocBoPhieus}
+          className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -85,8 +134,8 @@ export default function CuocBoPhieuPage() {
                 key={status.value}
                 onClick={() => setSelectedStatus(status.value)}
                 className={`flex-shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-all ${selectedStatus === status.value
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 {status.label}

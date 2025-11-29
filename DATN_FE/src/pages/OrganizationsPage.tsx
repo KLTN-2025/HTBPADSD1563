@@ -1,12 +1,36 @@
-import { mockToChucDonVis, mockCuocBoPhieus } from '../data/mockData';
-import { Building2, Vote, Search, Grid, List } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Building2, Vote, Search, Grid, List, Loader2 } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { toChucService } from '@/services/toChucService';
+import { cuocBoPhieuService } from '@/services/cuocBoPhieuService';
+import { ToChucDonVi, CuocBoPhieu } from '@/types';
 
 export default function OrganizationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedType, setSelectedType] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [organizations, setOrganizations] = useState<ToChucDonVi[]>([]);
+    const [polls, setPolls] = useState<CuocBoPhieu[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [orgsData, pollsData] = await Promise.all([
+                    toChucService.getAll(),
+                    cuocBoPhieuService.getAll()
+                ]);
+                setOrganizations(orgsData);
+                setPolls(pollsData);
+            } catch (error) {
+                console.error('Failed to fetch organizations:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const orgTypes = [
         { value: 'all', label: 'Tất cả' },
@@ -17,19 +41,19 @@ export default function OrganizationsPage() {
     ];
 
     const getOrgStats = (orgId: number) => {
-        const cuocBoPhieus = mockCuocBoPhieus.filter((c) => c.to_chuc_id === orgId);
-        const active = cuocBoPhieus.filter((c) => c.trang_thai === 'dang_dien_ra').length;
-        const completed = cuocBoPhieus.filter((c) => c.trang_thai === 'hoan_thanh').length;
-        return { total: cuocBoPhieus.length, active, completed };
+        const orgPolls = polls.filter((c) => c.to_chuc_id === orgId);
+        const active = orgPolls.filter((c) => c.trang_thai === 'dang_dien_ra').length;
+        const completed = orgPolls.filter((c) => c.trang_thai === 'hoan_thanh').length;
+        return { total: orgPolls.length, active, completed };
     };
 
     const filteredOrgs = useMemo(() => {
-        return mockToChucDonVis.filter((org) => {
+        return organizations.filter((org) => {
             const matchesSearch = org.ten_to_chuc.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesType = selectedType === 'all' || org.loai === selectedType;
             return matchesSearch && matchesType;
         });
-    }, [searchTerm, selectedType]);
+    }, [searchTerm, selectedType, organizations]);
 
     const getTypeLabel = (type: string) => {
         const labels: Record<string, string> = {
@@ -50,6 +74,14 @@ export default function OrganizationsPage() {
         };
         return colors[type] || 'from-gray-500 to-gray-600';
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[60vh] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

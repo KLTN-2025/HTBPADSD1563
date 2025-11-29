@@ -33,6 +33,7 @@ export interface SharedData {
 export interface User {
     id: number;
     name: string;
+    ho_ten: string;
     email: string;
     avatar?: string;
     email_verified_at: string | null;
@@ -40,4 +41,18 @@ export interface User {
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
+    auth: Auth;
+};
+
+import { Config } from 'ziggy-js';
+
+declare global {
+    interface Window {
+        Ziggy: Config;
+    }
+    // eslint-disable-next-line no-var
+    var route: (name?: string, params?: any, absolute?: boolean, config?: Config) => string;
 }

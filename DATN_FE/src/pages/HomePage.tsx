@@ -2,18 +2,60 @@ import { Link } from 'react-router-dom';
 import {
   Vote,
   TrendingUp,
-  Users,
   CheckCircle2,
   ArrowRight,
   Activity,
   Shield,
   Zap,
+  Loader2,
 } from 'lucide-react';
-import { mockCuocBoPhieus, mockDashboardStats } from '../data/mockData';
+import { useState, useEffect } from 'react';
 import VotingCard from '../components/VotingCard';
+import { cuocBoPhieuService } from '@/services/cuocBoPhieuService';
+import { CuocBoPhieu } from '@/types';
 
 export default function HomePage() {
-  const activeCuocBoPhieus = mockCuocBoPhieus.filter((c) => c.trang_thai === 'dang_dien_ra');
+  const [cuocBoPhieus, setCuocBoPhieus] = useState<CuocBoPhieu[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total_cuoc_bo_phieu: 0,
+    cuoc_dang_dien_ra: 0,
+    total_phieu_bau: 0,
+    ty_le_tham_gia: 0,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const polls = await cuocBoPhieuService.getAll();
+        setCuocBoPhieus(polls);
+
+        // Calculate stats
+        const totalPolls = polls.length;
+        const activePolls = polls.filter((p) => p.trang_thai === 'dang_dien_ra').length;
+
+        // For total votes, we might need to fetch results for all polls or get from a stats endpoint
+        // For now, let's estimate or fetch for active ones if possible, or just use 0 if expensive
+        // Ideally backend provides a dashboard stats endpoint.
+        // We'll calculate simple stats from loaded polls if they include vote counts (they might not in list view)
+
+        setStats({
+          total_cuoc_bo_phieu: totalPolls,
+          cuoc_dang_dien_ra: activePolls,
+          total_phieu_bau: 0, // Placeholder as we don't have global vote count easily
+          ty_le_tham_gia: 0, // Placeholder
+        });
+      } catch (error) {
+        console.error('Failed to fetch home data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const activeCuocBoPhieus = cuocBoPhieus.filter((c) => c.trang_thai === 'dang_dien_ra').slice(0, 4);
 
   const StatCard = ({
     title,
@@ -36,7 +78,7 @@ export default function HomePage() {
             <Icon className="h-6 w-6" />
           </div>
           <div className={`rounded-full bg-gradient-to-r ${color} px-3 py-1 text-xs font-bold text-white`}>
-            {mockDashboardStats.cuoc_dang_dien_ra > 0 && title.includes('đang diễn ra') && 'LIVE'}
+            {stats.cuoc_dang_dien_ra > 0 && title.includes('đang diễn ra') && 'LIVE'}
           </div>
         </div>
         <p className="mb-1 text-sm font-medium text-gray-600">{title}</p>
@@ -47,6 +89,14 @@ export default function HomePage() {
       </div>
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -94,25 +144,25 @@ export default function HomePage() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Cuộc bỏ phiếu"
-            value={mockDashboardStats.total_cuoc_bo_phieu}
+            value={stats.total_cuoc_bo_phieu}
             icon={Vote}
             color="from-blue-500 to-blue-600"
           />
           <StatCard
             title="Đang diễn ra"
-            value={mockDashboardStats.cuoc_dang_dien_ra}
+            value={stats.cuoc_dang_dien_ra}
             icon={Activity}
             color="from-green-500 to-green-600"
           />
           <StatCard
             title="Tổng phiếu bầu"
-            value={mockDashboardStats.total_phieu_bau}
+            value={stats.total_phieu_bau}
             icon={CheckCircle2}
             color="from-purple-500 to-purple-600"
           />
           <StatCard
             title="Tỷ lệ tham gia"
-            value={mockDashboardStats.ty_le_tham_gia}
+            value={stats.ty_le_tham_gia}
             icon={TrendingUp}
             color="from-orange-500 to-orange-600"
             suffix="%"

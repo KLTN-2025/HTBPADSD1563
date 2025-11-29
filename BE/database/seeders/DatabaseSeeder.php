@@ -13,8 +13,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Call seeders in dependency order
+        $this->call([
+            ToChucSeeder::class,
+            NguoiDungSeeder::class,
+            CuocBoPhieuSeeder::class,
+            LuaChonSeeder::class,
+        ]);
 
+        // Keep the default User model seeder for compatibility
         User::firstOrCreate(
             ['email' => 'test@example.com'],
             [

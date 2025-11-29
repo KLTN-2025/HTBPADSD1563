@@ -3,84 +3,88 @@
 namespace App\Http\Controllers;
 
 use App\Models\NguoiDung;
+use App\Models\ToChucDonVi;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
 
 class NguoiDungController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(): JsonResponse
+    public function index()
     {
-        $nguoiDungs = NguoiDung::with('toChuc')
-            ->paginate(15);
+        $query = NguoiDung::with('toChuc');
 
-        return response()->json($nguoiDungs);
+        if (auth()->user()->vai_tro === 'to_chuc_quan_ly') {
+            $query->where('to_chuc_id', auth()->user()->to_chuc_id);
+        }
+
+        $nguoiDungs = $query->latest()->paginate(10);
+
+        return Inertia::render('NguoiDung/Index', [
+            'nguoiDungs' => $nguoiDungs,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): JsonResponse
+    public function create()
+    {
+        $toChucDonVis = ToChucDonVi::all();
+        return Inertia::render('NguoiDung/Create', [
+            'toChucDonVis' => $toChucDonVis,
+        ]);
+    }
+
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'ho_ten' => 'required|string|max:150',
-            'email' => 'required|email|max:190|unique:nguoi_dungs,email',
-            'mat_khau' => 'required|string|min:8',
+            'ho_ten' => 'required|string|max:255',
+            'email' => 'required|email|unique:nguoi_dungs,email',
+            'mat_khau' => 'required|string|min:6',
             'vai_tro' => 'required|in:quan_tri,to_chuc_quan_ly,quan_sat',
             'to_chuc_id' => 'nullable|exists:to_chuc_don_vis,id',
-            'trang_thai' => 'nullable|integer',
         ]);
 
         $validated['mat_khau'] = Hash::make($validated['mat_khau']);
+        $validated['trang_thai'] = 1; // Active by default
 
-        $nguoiDung = NguoiDung::create($validated);
+        NguoiDung::create($validated);
 
-        return response()->json($nguoiDung, 201);
+        return redirect()->route('nguoi-dung.index')->with('success', 'Tạo người dùng thành công.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(NguoiDung $nguoiDung): JsonResponse
+    public function edit(NguoiDung $nguoiDung)
     {
-        $nguoiDung->load('toChuc');
-
-        return response()->json($nguoiDung);
+        $toChucDonVis = ToChucDonVi::all();
+        return Inertia::render('NguoiDung/Edit', [
+            'nguoiDung' => $nguoiDung,
+            'toChucDonVis' => $toChucDonVis,
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, NguoiDung $nguoiDung): JsonResponse
+    public function update(Request $request, NguoiDung $nguoiDung)
     {
         $validated = $request->validate([
-            'ho_ten' => 'sometimes|required|string|max:150',
-            'email' => 'sometimes|required|email|max:190|unique:nguoi_dungs,email,' . $nguoiDung->id,
-            'mat_khau' => 'sometimes|string|min:8',
-            'vai_tro' => 'sometimes|required|in:quan_tri,to_chuc_quan_ly,quan_sat',
+            'ho_ten' => 'required|string|max:255',
+            'email' => 'required|email|unique:nguoi_dungs,email,' . $nguoiDung->id,
+            'vai_tro' => 'required|in:quan_tri,to_chuc_quan_ly,quan_sat',
             'to_chuc_id' => 'nullable|exists:to_chuc_don_vis,id',
-            'trang_thai' => 'nullable|integer',
+            'mat_khau' => 'nullable|string|min:6',
+            'trang_thai' => 'boolean',
         ]);
 
-        if (isset($validated['mat_khau'])) {
+        if (!empty($validated['mat_khau'])) {
             $validated['mat_khau'] = Hash::make($validated['mat_khau']);
+        } else {
+            unset($validated['mat_khau']);
         }
 
         $nguoiDung->update($validated);
 
-        return response()->json($nguoiDung);
+        return redirect()->route('nguoi-dung.index')->with('success', 'Cập nhật người dùng thành công.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(NguoiDung $nguoiDung): JsonResponse
+    public function destroy(NguoiDung $nguoiDung)
     {
         $nguoiDung->delete();
-
-        return response()->json(['message' => 'Đã xóa người dùng thành công'], 200);
+        return redirect()->route('nguoi-dung.index')->with('success', 'Xóa người dùng thành công.');
     }
 }

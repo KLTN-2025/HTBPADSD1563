@@ -11,18 +11,36 @@ class ToChucDonViController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
-        $toChucDonVis = ToChucDonVi::with(['nguoiDungs', 'cuocBoPhieus'])
-            ->paginate(15);
+        $query = ToChucDonVi::withCount(['nguoiDungs', 'cuocBoPhieus']);
 
-        return response()->json($toChucDonVis);
+        if (auth()->user()->vai_tro === 'to_chuc_quan_ly') {
+            $query->where('id', auth()->user()->to_chuc_id);
+        }
+
+        $toChucDonVis = $query->latest()->paginate(10);
+
+        return \Inertia\Inertia::render('ToChuc/Index', [
+            'toChucDonVis' => $toChucDonVis
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return \Inertia\Inertia::render('ToChuc/Create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'ten_to_chuc' => 'required|string|max:200',
@@ -30,44 +48,52 @@ class ToChucDonViController extends Controller
             'ma_ngoai' => 'nullable|string|max:100',
         ]);
 
-        $toChuc = ToChucDonVi::create($validated);
+        ToChucDonVi::create($validated);
 
-        return response()->json($toChuc, 201);
+        return redirect()->route('to-chuc-don-vi.index')->with('success', 'Tạo tổ chức thành công.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(ToChucDonVi $toChucDonVi): JsonResponse
+    public function show(ToChucDonVi $toChucDonVi)
     {
-        $toChucDonVi->load(['nguoiDungs', 'cuocBoPhieus']);
+        return redirect()->route('to-chuc-don-vi.edit', $toChucDonVi);
+    }
 
-        return response()->json($toChucDonVi);
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(ToChucDonVi $toChucDonVi)
+    {
+        return \Inertia\Inertia::render('ToChuc/Edit', [
+            'toChucDonVi' => $toChucDonVi
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ToChucDonVi $toChucDonVi): JsonResponse
+    public function update(Request $request, ToChucDonVi $toChucDonVi)
     {
         $validated = $request->validate([
-            'ten_to_chuc' => 'sometimes|required|string|max:200',
-            'loai' => 'sometimes|required|in:lop,khoa,cong_dong,khac',
+            'ten_to_chuc' => 'required|string|max:200',
+            'loai' => 'required|in:lop,khoa,cong_dong,khac',
             'ma_ngoai' => 'nullable|string|max:100',
         ]);
 
         $toChucDonVi->update($validated);
 
-        return response()->json($toChucDonVi);
+        return redirect()->route('to-chuc-don-vi.index')->with('success', 'Cập nhật thành công.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ToChucDonVi $toChucDonVi): JsonResponse
+    public function destroy(ToChucDonVi $toChucDonVi)
     {
         $toChucDonVi->delete();
 
-        return response()->json(['message' => 'Đã xóa tổ chức thành công'], 200);
+        return redirect()->route('to-chuc-don-vi.index')->with('success', 'Đã xóa tổ chức.');
     }
 }
