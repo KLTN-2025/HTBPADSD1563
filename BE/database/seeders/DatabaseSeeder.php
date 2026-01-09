@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         // Call seeders in dependency order
         $this->call([
+            AdminSeeder::class,
             ToChucSeeder::class,
             NguoiDungSeeder::class,
             CuocBoPhieuSeeder::class,
